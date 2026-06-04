@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Digital Pengambilan Paspor - Dabo Singkep</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .btn-gradient { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+        .preview-img { max-height: 220px; border-radius: 16px; object-fit: cover; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 4px solid white; }
+        .watermark-canvas { display: none; }
+        .shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+</head>
+<body class="min-h-screen text-gray-900 pb-12">
+
+<div id="app" class="max-w-4xl mx-auto p-4 md:p-8">
+    <header class="text-center mb-10">
+        <div class="flex justify-center mb-6">
+            <div class="bg-blue-900 p-5 rounded-3xl shadow-2xl transform hover:scale-110 transition-transform duration-300">
+                <i class="fas fa-passport text-5xl text-white"></i>
+            </div>
+        </div>
+        <h1 class="text-2xl md:text-4xl font-extrabold text-blue-900 tracking-tight leading-tight">KANTOR IMIGRASI KELAS II NON TPI DABO SINGKEP</h1>
+        <div class="mt-3 flex items-center justify-center gap-2">
+            <span class="h-1 w-8 bg-blue-600 rounded-full"></span>
+            <p class="text-blue-600 uppercase tracking-[0.25em] text-[10px] font-black">Sistem Digital Pengambilan Paspor</p>
+            <span class="h-1 w-8 bg-blue-600 rounded-full"></span>
+        </div>
+    </header>
+
+    <nav id="nav-container" class="flex justify-center gap-4 mb-10">
+        <button onclick="showPage('form')" id="btn-nav-form" class="flex items-center px-8 py-3 rounded-2xl font-bold transition-all shadow-lg bg-blue-600 text-white hover:bg-blue-700">
+            <i class="fas fa-edit mr-2"></i> Formulir
+        </button>
+        <button onclick="showPage('admin-login')" id="btn-nav-admin" class="flex items-center px-8 py-3 rounded-2xl font-bold transition-all shadow-md bg-white text-gray-600 border border-gray-200 hover:border-blue-400">
+            <i class="fas fa-lock mr-2"></i> Area Admin
+        </button>
+    </nav>
+
+    <section id="page-form" class="page-content glass p-6 md:p-12 rounded-[3rem] shadow-2xl border border-white/50 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-[5rem] -z-10"></div>
+        
+        <div class="flex items-center mb-10 border-b border-gray-100 pb-6">
+            <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-blue-200">
+                <i class="fas fa-file-signature text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-gray-800">Lengkapi Data</h2>
+                <p class="text-gray-400 text-xs font-medium">Mohon isi data dengan sebenar-benarnya</p>
+            </div>
+        </div>
+        
+        <form id="passportForm" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-gray-700 ml-1">Nama Pemilik Paspor</label>
+                    <input type="text" id="nama_pemilik" required class="w-full p-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder-gray-300 bg-gray-50/50" placeholder="Contoh: BUDI SANTOSO">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-gray-700 ml-1">No Paspor</label>
+                    <input type="text" id="no_paspor" required class="w-full p-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-mono bg-gray-50/50 uppercase" placeholder="X1234567">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-gray-700 ml-1">Nama Penerima</label>
+                    <input type="text" id="nama_penerima" required class="w-full p-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder-gray-300 bg-gray-50/50" placeholder="Contoh: ANDI SURYA">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-gray-700 ml-1">Nomor WA Penerima</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 font-black border-r border-gray-300 pr-3">+62</span>
+                        <input type="tel" id="wa_penerima" required class="w-full p-4 pl-20 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all bg-gray-50/50" placeholder="81234567890">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-sm font-black text-gray-800"><i class="fas fa-file-contract mr-2 text-blue-500"></i> SURAT KUASA</span>
+                    <span class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">Jika Pengambilan Diwakilkan</span>
+                </div>
+                <div class="flex flex-col gap-3 md:flex-row">
+                    <button type="button" onclick="triggerCamera('kuasa')" class="flex-1 bg-blue-50 text-blue-700 p-4 rounded-2xl flex items-center justify-center font-bold text-sm hover:bg-blue-100 transition-colors"><i class="fas fa-camera mr-2"></i> Ambil via Kamera</button>
+                    <input type="file" id="file-kuasa" accept="image/*" class="hidden" onchange="handleFile(this, 'kuasa')">
+                    <button type="button" onclick="document.getElementById('file-kuasa').click()" class="flex-1 bg-gray-50 text-gray-600 p-4 rounded-2xl flex items-center justify-center font-semibold text-sm hover:bg-gray-100 transition-colors"><i class="fas fa-folder-open mr-2"></i> Dari Galeri</button>
+                </div>
+                <div id="preview-kuasa" class="mt-4 flex justify-center"></div>
+            </div>
+
+            <div class="bg-blue-900 p-8 rounded-[3rem] text-white shadow-xl shadow-blue-200">
+                <div class="text-center mb-6">
+                    <h3 class="text-lg font-black uppercase tracking-wider">Dokumentasi Bukti Pengambilan</h3>
+                    <p class="text-blue-200 text-xs mt-1">Sistem akan otomatis memberikan watermark waktu nyata</p>
+                </div>
+                <button type="button" onclick="triggerCamera('bukti', true)" class="w-full bg-white text-blue-900 p-6 rounded-3xl flex flex-col items-center justify-center shadow-inner hover:bg-blue-50 transition-all group">
+                    <i class="fas fa-camera text-4xl mb-2 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-black text-lg">AMBIL DOKUMENTASI BUKTI</span>
+                    <span class="text-[10px] font-bold opacity-60">(Dengan Watermark Tanggal & Jam)</span>
+                </button>
+                <div id="preview-bukti" class="mt-6 flex flex-col items-center"></div>
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full btn-gradient text-white font-black py-6 rounded-[2.5rem] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center text-xl uppercase tracking-widest">
+                <i class="fas fa-cloud-upload-alt mr-3"></i> Kirim Data Sekarang
+            </button>
+        </form>
+    </section>
+
+    <section id="page-admin-login" class="page-content hidden glass max-w-md mx-auto p-12 rounded-[4rem] shadow-2xl border border-white mt-12 text-center">
+        <div class="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
+            <i class="fas fa-user-lock text-4xl text-blue-900"></i>
+        </div>
+        <h2 class="text-3xl font-black text-gray-800 mb-2">Area Terbatas</h2>
+        <p class="text-gray-400 text-sm mb-10 font-medium">Hanya untuk Petugas Imigrasi Dabo Singkep</p>
+        
+        <form id="loginForm" class="space-y-6">
+            <div class="relative">
+                <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="username" required class="w-full p-5 pl-12 rounded-2xl border border-gray-100 bg-gray-50 outline-none focus:ring-4 focus:ring-blue-100" placeholder="Username">
+            </div>
+            <div class="relative">
+                <i class="fas fa-key absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="password" id="password" required class="w-full p-5 pl-12 rounded-2xl border border-gray-100 bg-gray-50 outline-none focus:ring-4 focus:ring-blue-100" placeholder="Password">
+            </div>
+            <button type="submit" class="w-full bg-gray-900 text-white font-black py-5 rounded-[2rem] hover:bg-blue-900 transition-all shadow-xl">LOG IN KE PANEL</button>
+        </form>
+    </section>
+
+    <section id="page-admin-dashboard" class="page-content hidden space-y-8 animate-fadeIn">
+        <div class="glass p-10 rounded-[3rem] shadow-xl border border-white">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-10 border-b pb-8">
+                <div>
+                    <h2 class="text-3xl font-black text-blue-900">Rekapan Pengambilan</h2>
+                    <p class="text-gray-400 text-sm font-medium">Monitoring data pemohon secara real-time</p>
+                </div>
+                <button onclick="logout()" class="bg-red-50 text-red-600 px-8 py-3 rounded-2xl text-sm font-black hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                    <i class="fas fa-sign-out-alt mr-2"></i> KELUAR
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-blue-900 p-8 rounded-[2.5rem] shadow-lg shadow-blue-100 text-white flex flex-col justify-center">
+                    <p class="text-blue-300 text-xs font-black uppercase tracking-widest">Total Pemohon</p>
+                    <p id="stat-total" class="text-6xl font-black mt-2">0</p>
+                </div>
+                <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button onclick="exportExcel()" class="bg-emerald-500 text-white p-6 rounded-3xl font-black flex items-center justify-center hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100">
+                        <i class="fas fa-file-excel text-2xl mr-3"></i> DOWNLOAD EXCEL
+                    </button>
+                    <button onclick="exportPDF()" class="bg-rose-500 text-white p-6 rounded-3xl font-black flex items-center justify-center hover:bg-rose-600 transition-all shadow-lg shadow-rose-100">
+                        <i class="fas fa-file-pdf text-2xl mr-3"></i> DOWNLOAD PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-10 flex flex-col md:flex-row gap-4">
+                <div class="flex-1 relative">
+                    <i class="fas fa-calendar absolute left-5 top-1/2 -translate-y-1/2 text-blue-600"></i>
+                    <select id="filter-month" class="w-full p-5 pl-12 bg-gray-50 border-none rounded-2xl font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-blue-50" onchange="renderTable()">
+                        <option value="all">📅 Semua Bulan</option>
+                        <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+                        <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+                        <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+                        <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                    </select>
+                </div>
+                <div class="flex-[2] relative">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="search-data" placeholder="Cari nama pemohon..." class="w-full p-5 pl-12 bg-gray-50 border-none rounded-2xl font-bold focus:ring-4 focus:ring-blue-50" onkeyup="renderTable()">
+                </div>
+            </div>
+        </div>
+
+        <div class="glass rounded-[3rem] shadow-2xl overflow-hidden bg-white border border-white">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-900 text-white">
+                        <tr>
+                            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-wider">Waktu</th>
+                            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-wider">Nama Pemilik</th>
+                            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-wider">No. Paspor</th>
+                            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-wider">Nama Penerima</th>
+                            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-wider">WA Penerima</th>
+                            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-wider">Lampiran Foto</th>
+                            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-wider text-center">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-gray-50"></tbody>
+                </table>
+            </div>
+            <div id="no-data" class="p-24 text-center hidden">
+                <i class="fas fa-folder-open text-6xl text-gray-200 mb-4"></i>
+                <p class="text-gray-400 font-bold">Data tidak ditemukan / Masalah izin Firebase</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div id="camera-modal" class="fixed inset-0 bg-black/95 z-[100] hidden flex flex-col items-center justify-center p-6 backdrop-blur-xl">
+    <div class="relative w-full max-w-2xl">
+        <video id="camera-stream" class="w-full bg-black rounded-[3rem] aspect-video object-cover border-4 border-blue-600 shadow-2xl" autoplay playsinline></video>
+        <div class="absolute top-6 left-6 bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-bold animate-pulse">KAMERA AKTIF</div>
+    </div>
+    <div class="flex gap-12 mt-16 items-center">
+        <button onclick="closeCamera()" class="w-20 h-20 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-all"><i class="fas fa-times text-2xl"></i></button>
+        <button id="snap-btn" class="w-32 h-32 bg-white text-blue-900 rounded-full flex items-center justify-center border-[10px] border-blue-600/30 hover:scale-110 active:scale-90 transition-all"><i class="fas fa-camera text-4xl"></i></button>
+        <div class="w-20 h-20"></div> <!-- Spacer -->
+    </div>
+</div>
+
+<div id="viewer-modal" class="fixed inset-0 bg-black/95 z-[110] hidden flex flex-col items-center justify-center p-4 backdrop-blur-lg" onclick="this.classList.add('hidden')">
+    <img id="viewer-img" class="max-w-full max-h-[80vh] rounded-3xl border-8 border-white/20 shadow-2xl" src="">
+    <button class="mt-8 bg-white text-black px-10 py-3 rounded-full font-black uppercase text-sm">Tutup Pratinjau</button>
+</div>
+
+<div id="toast" class="fixed top-10 left-1/2 transform -translate-x-1/2 glass px-12 py-5 rounded-[2rem] shadow-2xl z-[200] border-l-8 border-blue-600 hidden animate-bounce">
+    <p id="toast-msg" class="font-black text-gray-800 text-center"></p>
+</div>
+
+<canvas id="wm-canvas" class="watermark-canvas"></canvas>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDOLptl0QsevoIjsTL8dGhm7kp6UOVITLc",
+        authDomain: "pengambilan-paspor.firebaseapp.com",
+        projectId: "pengambilan-paspor",
+        storageBucket: "pengambilan-paspor.firebasestorage.app",
+        messagingSenderId: "1018438656806",
+        appId: "1:1018438656806:web:620ab117b18ece5c6e57e7",
+        measurementId: "G-6PMWJ5YBGZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const appId = 'pengambilan-paspor';
+
+    let allData = [];
+    let formImages = { kuasa: null, bukti: null };
+    let activeField = null;
+    let applyWatermark = false;
+
+    // Initialize Auth
+    async function init() {
+        try {
+            await signInAnonymously(auth);
+            console.log("Logged in anonymously to Firebase.");
+        } catch (e) {
+            console.error("Auth Error:", e);
+            if(e.code === 'auth/admin-restricted-operation') {
+                showToast("⚠️ ERROR: Aktifkan 'Anonymous Sign-in' di Firebase Authentication Console.", "red");
+            }
+        }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) listenToData();
+    });
+
+    function listenToData() {
+        // Path spesifik untuk artifacts
+        const q = collection(db, 'artifacts', appId, 'public', 'data', 'paspor_entries');
+        onSnapshot(q, (snapshot) => {
+            allData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            renderTable();
+            updateStats();
+        }, (error) => {
+            console.error("Firestore Error:", error);
+            if (error.code === 'permission-denied') {
+                showToast("⚠️ IZIN DITOLAK: Perbarui 'Rules' di Firestore Console sesuai instruksi.", "red");
+                document.getElementById('no-data').innerHTML = `
+                    <div class="bg-red-50 p-10 rounded-3xl border-2 border-red-200 text-red-700">
+                        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                        <h4 class="font-black">Masalah Izin Database (Security Rules)</h4>
+                        <p class="text-sm mt-2">Firestore memblokir akses. Silakan ganti tab <b>Rules</b> di Firebase Console Anda menjadi <b>allow read, write: if true;</b></p>
+                    </div>
+                `;
+                document.getElementById('no-data').classList.remove('hidden');
+            }
+        });
+    }
+
+    window.showPage = (id) => {
+        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+        document.getElementById(`page-${id}`).classList.remove('hidden');
+        window.scrollTo(0, 0);
+    };
+
+    window.triggerCamera = async (field, wm = false) => {
+        activeField = field;
+        applyWatermark = wm;
+        const video = document.getElementById('camera-stream');
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment', width: 1280, height: 720 } 
+            });
+            video.srcObject = stream;
+            document.getElementById('camera-modal').classList.remove('hidden');
+        } catch (err) { 
+            showToast("Kamera tidak dapat diakses. Cek izin browser.", "red"); 
+        }
+    };
+
+    window.closeCamera = () => {
+        const video = document.getElementById('camera-stream');
+        if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+        document.getElementById('camera-modal').classList.add('hidden');
+    };
+
+    document.getElementById('snap-btn').addEventListener('click', () => {
+        const video = document.getElementById('camera-stream');
+        const canvas = document.getElementById('wm-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        if (applyWatermark) {
+            const now = new Date();
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} WIB`;
+            
+            // Draw background for watermark
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.fillRect(0, canvas.height - 120, canvas.width, 120);
+            
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+            ctx.font = "bold 34px Inter";
+            ctx.fillText(dateStr, canvas.width / 2, canvas.height - 70);
+            ctx.font = "normal 28px Inter";
+            ctx.fillText(timeStr, canvas.width / 2, canvas.height - 30);
+            
+            // Add Location mark
+            ctx.font = "bold 16px Inter";
+            ctx.textAlign = "left";
+            ctx.fillText("KANIM DABO SINGKEP", 30, canvas.height - 30);
+        }
+
+        formImages[activeField] = canvas.toDataURL('image/jpeg', 0.8);
+        document.getElementById(`preview-${activeField}`).innerHTML = `<img src="${formImages[activeField]}" class="preview-img mt-2">`;
+        closeCamera();
+        showToast("Foto Berhasil Diambil");
+    });
+
+    window.handleFile = (input, field) => {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                formImages[field] = e.target.result;
+                document.getElementById(`preview-${field}`).innerHTML = `<img src="${e.target.result}" class="preview-img mt-2">`;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
+    document.getElementById('passportForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!formImages.bukti || !formImages.kuasa) {
+            return showToast("SURAT KUASA dan FOTO BUKTI wajib diisi!", "red");
+        }
+        
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Mengirim Data...`;
+
+        try {
+            const entryData = {
+                nama_pemilik: document.getElementById('nama_pemilik').value.toUpperCase(),
+                no_paspor: document.getElementById('no_paspor').value.toUpperCase(),
+                nama_penerima: document.getElementById('nama_penerima').value.toUpperCase(),
+                wa_penerima: "62" + document.getElementById('wa_penerima').value,
+                img_kuasa: formImages.kuasa,
+                img_bukti: formImages.bukti,
+                createdAt: serverTimestamp(),
+                month: (new Date().getMonth() + 1).toString().padStart(2, '0'),
+                year: new Date().getFullYear().toString()
+            };
+
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'paspor_entries'), entryData);
+            
+            showToast("✅ DATA BERHASIL DISIMPAN!");
+            e.target.reset();
+            document.querySelectorAll('[id^="preview-"]').forEach(d => d.innerHTML = '');
+            formImages = { kuasa: null, bukti: null };
+        } catch (err) { 
+            console.error(err);
+            if(err.code === 'permission-denied') {
+                showToast("Izin Database Ditolak (Rules)", "red");
+            } else {
+                showToast("Gagal menyimpan data.", "red");
+            }
+        }
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-cloud-upload-alt mr-3"></i> Kirim Data Sekarang`;
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+        
+        if (user === 'admindokintalkim' && pass === 'dokintalkim123') {
+            showPage('admin-dashboard');
+            showToast("Selamat Datang, Admin");
+        } else { 
+            showToast("Login Gagal: Username/Password Salah", "red"); 
+        }
+    });
+
+    window.logout = () => showPage('form');
+
+    window.renderTable = () => {
+        const tbody = document.getElementById('table-body');
+        const filter = document.getElementById('filter-month').value;
+        const search = document.getElementById('search-data').value.toLowerCase();
+        
+        const filtered = allData.filter(d => {
+            const matchMonth = filter === 'all' || d.month === filter;
+            const searchName = d.nama_pemilik || d.nama || '';
+            const matchSearch = searchName.toLowerCase().includes(search) || d.no_paspor.toLowerCase().includes(search);
+            return matchMonth && matchSearch;
+        });
+        
+        tbody.innerHTML = filtered.map(d => `
+            <tr class="text-sm border-b hover:bg-gray-50/50 transition-colors">
+                <td class="px-8 py-6">
+                    <span class="block font-black text-gray-800">${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString('id-ID') : 'Memproses...'}</span>
+                    <span class="text-[10px] text-gray-400 font-bold uppercase">${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleTimeString('id-ID') : ''}</span>
+                </td>
+                <td class="px-8 py-6 font-black text-blue-900">${d.nama_pemilik || d.nama || '-'}</td>
+                <td class="px-8 py-6 font-mono font-bold text-gray-600">${d.no_paspor}</td>
+                <td class="px-8 py-6 font-bold text-blue-900">${d.nama_penerima || '-'}</td>
+                <td class="px-8 py-6 font-bold text-gray-700">${d.wa_penerima || d.whatsapp || '-'}</td>
+                <td class="px-8 py-6">
+                    <div class="flex gap-2">
+                        ${d.img_kuasa ? `<button onclick="viewImage('${d.img_kuasa}')" class="px-4 py-2 bg-yellow-50 text-yellow-700 rounded-xl text-[10px] font-black hover:bg-yellow-100 uppercase transition-all">Kuasa</button>` : ''}
+                        ${d.img_bukti ? `<button onclick="viewImage('${d.img_bukti}')" class="px-4 py-2 bg-purple-50 text-purple-700 rounded-xl text-[10px] font-black hover:bg-purple-100 uppercase transition-all">Bukti</button>` : ''}
+                    </div>
+                </td>
+                <td class="px-8 py-6 text-center">
+                    <button onclick="deleteEntry('${d.id}')" class="text-red-300 hover:text-red-600 p-3 transition-colors"><i class="fas fa-trash-alt text-lg"></i></button>
+                </td>
+            </tr>
+        `).join('');
+        document.getElementById('no-data').classList.toggle('hidden', filtered.length > 0);
+    };
+
+    window.updateStats = () => {
+        document.getElementById('stat-total').innerText = allData.length;
+    };
+
+    window.viewImage = (url) => {
+        document.getElementById('viewer-img').src = url;
+        document.getElementById('viewer-modal').classList.remove('hidden');
+    };
+
+    window.deleteEntry = async (id) => {
+        if (confirm("⚠️ Hapus permanen data ini dari database?")) {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paspor_entries', id));
+                showToast("Data telah dihapus");
+            } catch (e) { showToast("Gagal hapus: Akses Ditolak", "red"); }
+        }
+    };
+
+    function showToast(msg, color = "blue") {
+        const t = document.getElementById('toast');
+        document.getElementById('toast-msg').innerText = msg;
+        t.style.borderLeftColor = color === "red" ? "#ef4444" : "#2563eb";
+        t.classList.remove('hidden');
+        setTimeout(() => t.classList.add('hidden'), 5000);
+    }
+
+    window.exportExcel = () => {
+        const filter = document.getElementById('filter-month').value;
+        const filteredData = filter === 'all' ? allData : allData.filter(d => d.month === filter);
+        
+        const data = filteredData.map(d => ({
+            "Tanggal Pengambilan": d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString('id-ID') : '',
+            "Nama Pemilik": d.nama_pemilik || d.nama || '',
+            "Nomor Paspor": d.no_paspor,
+            "Nama Penerima": d.nama_penerima || '',
+            "No WA Penerima": d.wa_penerima || d.whatsapp || '',
+            "Surat Kuasa": d.img_kuasa ? 'Ada' : 'Tidak',
+            "Foto Bukti": d.img_bukti ? 'Ada' : 'Tidak'
+        }));
+        
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Rekap Paspor");
+        XLSX.writeFile(wb, `Rekap_Paspor_${filter === 'all' ? 'Semua' : 'Bulan_' + filter}.xlsx`);
+    };
+
+    window.exportPDF = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4'); // 'l' for landscape
+        const filter = document.getElementById('filter-month').value;
+        
+        doc.setFont("helvetica", "bold");
+        doc.text("KANTOR IMIGRASI KELAS II NON TPI DABO SINGKEP", 14, 15);
+        doc.setFontSize(10);
+        doc.text("Laporan Rekap Digital Pengambilan Paspor", 14, 22);
+        
+        const filteredData = filter === 'all' ? allData : allData.filter(d => d.month === filter);
+        const body = filteredData.map((d, index) => [
+            index + 1,
+            d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString('id-ID') : '',
+            d.nama_pemilik || d.nama || '',
+            d.no_paspor,
+            d.nama_penerima || '',
+            d.wa_penerima || d.whatsapp || '',
+            '', // Placeholder for Kuasa Image
+            ''  // Placeholder for Bukti Image
+        ]);
+        
+        doc.autoTable({
+            startY: 30,
+            head: [['No', 'Tanggal', 'Pemilik', 'Paspor', 'Penerima', 'WA', 'Kuasa', 'Bukti']],
+            body: body,
+            theme: 'striped',
+            headStyles: { fillStyle: [30, 58, 138] },
+            columnStyles: {
+                6: { cellWidth: 30, minCellHeight: 20 }, // Kuasa
+                7: { cellWidth: 30, minCellHeight: 20 }  // Bukti
+            },
+            didDrawCell: function(data) {
+                if (data.section === 'body') {
+                    const rowData = filteredData[data.row.index];
+                    
+                    if (data.column.index === 6 && rowData.img_kuasa) {
+                        try {
+                            doc.addImage(rowData.img_kuasa, 'JPEG', data.cell.x + 2, data.cell.y + 2, 26, 16);
+                        } catch (e) { console.error("Error adding Kuasa image to PDF", e); }
+                    }
+                    if (data.column.index === 7 && rowData.img_bukti) {
+                        try {
+                            doc.addImage(rowData.img_bukti, 'JPEG', data.cell.x + 2, data.cell.y + 2, 26, 16);
+                        } catch (e) { console.error("Error adding Bukti image to PDF", e); }
+                    }
+                }
+            }
+        });
+        
+        doc.save(`Laporan_Paspor_${filter}.pdf`);
+    };
+
+    init();
+</script>
+</body>
+</html>
